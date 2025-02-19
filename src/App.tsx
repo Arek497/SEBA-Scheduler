@@ -5,12 +5,14 @@ interface Address {
   street: string;
   city: string;
   postalCode: string | number;
+  duration: number; // Duration of the showing in minutes
+  travelTime: number; // Travel time to the address in minutes
 }
 
 const App: React.FC = () => {
   // Initialize the addresses state with an array of Address objects
   const [addresses, setAddresses] = useState<Address[]>([
-    { street: "", city: "", postalCode: "" },
+    { street: "", city: "", postalCode: "", duration: 15, travelTime: 0 }, // Default values
   ]);
   const [startTime, setStartTime] = useState<string>(""); // For manual start time
 
@@ -27,12 +29,13 @@ const App: React.FC = () => {
   // Function to handle schedule generation
   const generateSchedule = () => {
     console.log("Schedule generated with start time:", startTime);
+    console.log("Addresses:", addresses); // Log addresses with durations and travel times
     // Additional logic for generating the schedule can be added here
   };
 
   // Function to reset fields
   const resetFields = () => {
-    setAddresses([{ street: "", city: "", postalCode: "" }]);
+    setAddresses([{ street: "", city: "", postalCode: "", duration: 15, travelTime: 0 }]);
     setStartTime(""); // Reset start time
   };
 
@@ -66,6 +69,18 @@ const App: React.FC = () => {
             onChange={(e) => updateAddress(index, "postalCode", e.target.value)}
             placeholder="Postal Code"
           />
+          <input
+            type="number"
+            value={address.duration}
+            onChange={(e) => updateAddress(index, "duration", Number(e.target.value))}
+            placeholder="Duration (minutes)"
+          />
+          <input
+            type="number"
+            value={address.travelTime}
+            onChange={(e) => updateAddress(index, "travelTime", Number(e.target.value))}
+            placeholder="Travel Time (minutes)"
+          />
         </div>
       ))}
       {/* Buttons for generate schedule and reset */}
@@ -76,4 +91,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
