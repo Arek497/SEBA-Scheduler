@@ -1,0 +1,81 @@
+/* Base styles */
+.app {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Start Time Input */
+.time-input {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-input label {
+  font-weight: bold;
+}
+
+/* Address input rows */
+.address-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* Buttons */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+button {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+.reset-button {
+  background: #ff4444 !important;
+}
+
+.reset-button:hover {
+  background: #cc0000 !important;
+}
+
+/* Schedule table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+}
