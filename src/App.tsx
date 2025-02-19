@@ -5,8 +5,8 @@ interface Address {
   street: string;
   city: string;
   postalCode: string | number;
-  travelTime: number; // Add travelTime to the address interface
-  showingDuration: number; // Add showingDuration to the address interface
+  travelTime: number; // Time taken to travel to the next address
+  showingDuration: number; // Duration of the showing
 }
 
 // Define the Schedule interface
@@ -20,43 +20,51 @@ interface Schedule {
 }
 
 const App: React.FC = () => {
-  // Initialize the addresses state with an array of Address objects
   const [addresses, setAddresses] = useState<Address[]>([
-    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 },
+    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 10 },
   ]);
   const [startTime, setStartTime] = useState<string>("08:00"); // Default start time
-  const [schedule, setSchedule] = useState<Schedule[]>([]); // Change to Schedule array
+  const [schedule, setSchedule] = useState<Schedule[]>([]); // Use Schedule type for schedule
 
   // Function to add a new address
   const addAddress = () => {
-    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 }]);
+    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 10 }]);
   };
 
   // Update function to modify a specific field in a given address
   const updateAddress = (index: number, field: keyof Address, value: string | number) => {
     const newAddresses = [...addresses];
     newAddresses[index] = {
-      ...newAddresses[index], // Keep the other fields intact
-      [field]: value, // Update the specific field
+      ...newAddresses[index],
+      [field]: value,
     };
-    setAddresses(newAddresses); // Update the state with the modified addresses
+    setAddresses(newAddresses);
+  };
+
+  // Function to round time to the nearest quarter hour
+  const roundToQuarterHour = (date: Date): Date => {
+    const minutes = date.getMinutes();
+    const remainder = minutes % 15;
+    date.setMinutes(minutes + (15 - remainder));
+    return date;
   };
 
   // Function to calculate the next booking time based on travel and showing duration
   const calculateNextBookingTime = (currentTime: Date, travelTime: number, showingDuration: number) => {
-    const nextBookingTime = new Date(currentTime.getTime() + (travelTime + showingDuration) * 60000);
-    return nextBookingTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    let nextTime = new Date(currentTime.getTime() + (travelTime + showingDuration) * 60000);
+    nextTime = roundToQuarterHour(nextTime); // Round to nearest quarter hour
+    return nextTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   // Function to generate schedule based on addresses and start time
   const generateSchedule = () => {
-    const newSchedule: Schedule[] = []; // Use Schedule type for newSchedule
+    const newSchedule: Schedule[] = [];
     const startTimeParts = startTime.split(":");
     const initialDate = new Date();
-    initialDate.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]), 0, 0); // Set initial date with the selected time
+    initialDate.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]), 0, 0);
     let currentTime = initialDate;
 
-    addresses.forEach((address, index) => {
+    addresses.forEach((address) => {
       const nextBookingTime = calculateNextBookingTime(currentTime, address.travelTime, address.showingDuration);
       newSchedule.push({
         street: address.street,
@@ -66,7 +74,8 @@ const App: React.FC = () => {
         travelTime: address.travelTime,
         nextBookingTime: nextBookingTime,
       });
-      currentTime = new Date(currentTime.getTime() + (address.travelTime + address.showingDuration) * 60000); // Update current time to the next booking time
+      currentTime = new Date(currentTime.getTime() + (address.travelTime + address.showingDuration) * 60000);
+      currentTime = roundToQuarterHour(currentTime); // Round to the nearest quarter hour after scheduling
     });
 
     setSchedule(newSchedule);
@@ -74,7 +83,7 @@ const App: React.FC = () => {
 
   // Function to reset all fields
   const resetFields = () => {
-    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 }]);
+    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 10 }]);
     setStartTime("08:00");
     setSchedule([]);
   };
