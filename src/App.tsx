@@ -32,12 +32,34 @@ const App: React.FC = () => {
     setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 }]);
   };
 
+  // Function to calculate the next booking time
+  const calculateNextBookingTime = (currentTime: Date, travelTime: number, showingDuration: number) => {
+    const totalTime = travelTime + showingDuration;
+    const nextTime = new Date(currentTime.getTime() + totalTime * 60000); // Convert minutes to milliseconds
+
+    // Round to the nearest quarter-hour
+    const minutes = nextTime.getMinutes();
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    nextTime.setMinutes(roundedMinutes);
+    if (roundedMinutes === 60) {
+      nextTime.setHours(nextTime.getHours() + 1);
+      nextTime.setMinutes(0);
+    }
+    
+    return nextTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   // Function to generate schedule based on addresses and start time
   const generateSchedule = () => {
-    const newSchedule = addresses.map((address, index) => {
-      const endTime = new Date(new Date().setMinutes(new Date().getMinutes() + Number(address.travelTime) + Number(address.showingDuration))).toLocaleTimeString();
-      return `Showing ${index + 1}: ${address.street}, ${address.city} at ${startTime}. Duration: ${address.showingDuration} min, Travel Time: ${address.travelTime} min. End Time: ${endTime}`;
+    const newSchedule: string[] = [];
+    let currentTime = new Date(`1970-01-01T${startTime}:00`); // Using a fixed date
+
+    addresses.forEach((address, index) => {
+      const nextBookingTime = calculateNextBookingTime(currentTime, address.travelTime, address.showingDuration);
+      newSchedule.push(`Showing ${index + 1}: ${address.street}, ${address.city} at ${currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Duration: ${address.showingDuration} min, Travel Time: ${address.travelTime} min. Next Booking Time: ${nextBookingTime}`);
+      currentTime = new Date(`1970-01-01T${nextBookingTime}:00`); // Update current time to next booking time
     });
+    
     setSchedule(newSchedule);
   };
 
