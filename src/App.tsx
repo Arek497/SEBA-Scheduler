@@ -1,140 +1,145 @@
 import React, { useState } from "react";
 
-// Define the Schedule interface
-interface Schedule {
-  address: string; // Combined address field
-  showingDuration: number;
-  travelTime: number;
-  startTime: string;
-  endTime: string;
+// Define the Address interface with proper types
+interface Address {
+  street: string;
+  city: string;
+  postalCode: string;
 }
 
 const App: React.FC = () => {
-  const [addresses, setAddresses] = useState<string[]>([""]); // Array to hold addresses as strings
-  const [startTime, setStartTime] = useState<string>("09:00"); // Default start time (9:00 AM)
-  const [schedule, setSchedule] = useState<Schedule[]>([]); // Schedule state
+  // Initialize the addresses state with an array of Address objects
+  const [addresses, setAddresses] = useState<Address[]>([
+    { street: "", city: "", postalCode: "" },
+  ]);
+  const [startTime, setStartTime] = useState<string>("09:00 AM");
+  const [showingDuration, setShowingDuration] = useState<number>(10);
+  const [travelTime, setTravelTime] = useState<number>(5);
+  const [schedule, setSchedule] = useState<any[]>([]);
 
-  // State to hold showing duration and travel time
-  const [showingDurations, setShowingDurations] = useState<number[]>([10]); // Default duration
-  const [travelTimes, setTravelTimes] = useState<number[]>([5]); // Default travel time
-
-  // Function to add a new address input
-  const addAddress = () => {
-    setAddresses([...addresses, ""]); // Add a new empty string for the address
-    setShowingDurations([...showingDurations, 10]); // Default showing duration for new address
-    setTravelTimes([...travelTimes, 5]); // Default travel time for new address
-  };
-
-  // Function to update a specific address in the array
-  const updateAddress = (index: number, value: string) => {
+  // Function to update a specific field in a given address
+  const updateAddress = (index: number, field: keyof Address, value: string) => {
     const newAddresses = [...addresses];
-    newAddresses[index] = value; // Update the specific address
+    newAddresses[index] = {
+      ...newAddresses[index],
+      [field]: value,
+    };
     setAddresses(newAddresses);
   };
 
-  // Function to update showing duration
-  const updateShowingDuration = (index: number, value: number) => {
-    const newShowingDurations = [...showingDurations];
-    newShowingDurations[index] = value; // Update the specific duration
-    setShowingDurations(newShowingDurations);
-  };
-
-  // Function to update travel time
-  const updateTravelTime = (index: number, value: number) => {
-    const newTravelTimes = [...travelTimes];
-    newTravelTimes[index] = value; // Update the specific travel time
-    setTravelTimes(newTravelTimes);
-  };
-
-  // Function to round time to the nearest quarter hour
-  const roundToQuarterHour = (date: Date): Date => {
-    const minutes = date.getMinutes();
-    const remainder = minutes % 15;
-    date.setMinutes(minutes + (remainder ? 15 - remainder : 0)); // Round up to the next quarter hour
-    return date;
-  };
-
-  // Function to calculate the next booking time based on travel and showing duration
-  const calculateNextBookingTime = (currentTime: Date, travelTime: number, showingDuration: number) => {
-    const endTime = new Date(currentTime.getTime() + (travelTime + showingDuration) * 60000);
-    return roundToQuarterHour(endTime); // Round to the nearest quarter hour
-  };
-
-  // Function to generate schedule based on addresses, start time, showing duration, and travel time
-  const generateSchedule = () => {
-    const newSchedule: Schedule[] = [];
-    const startTimeParts = startTime.split(":");
-    const initialDate = new Date();
-    initialDate.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]), 0, 0);
-    let currentTime = initialDate;
-
-    addresses.forEach((address, index) => {
-      const showingDuration = showingDurations[index]; // Get showing duration from array
-      const travelTime = travelTimes[index]; // Get travel time from array
-      const endTime = calculateNextBookingTime(currentTime, travelTime, showingDuration);
-
-      newSchedule.push({
-        address: address,
-        showingDuration: showingDuration,
-        travelTime: travelTime,
-        startTime: currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
-        endTime: endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
-      });
-
-      // Update currentTime for the next showing
-      currentTime = endTime; // Set current time to end of the last showing
-    });
-
-    setSchedule(newSchedule);
+  // Function to add a new address
+  const addAddress = () => {
+    setAddresses([...addresses, { street: "", city: "", postalCode: "" }]);
   };
 
   // Function to reset all fields
   const resetFields = () => {
-    setAddresses([""]); // Reset to a single empty address field
-    setShowingDurations([10]);
-    setTravelTimes([5]);
-    setStartTime("09:00");
+    setAddresses([{ street: "", city: "", postalCode: "" }]);
+    setStartTime("09:00 AM");
+    setShowingDuration(10);
+    setTravelTime(5);
     setSchedule([]);
+  };
+
+  // Function to generate the schedule
+  const generateSchedule = () => {
+    const newSchedule = [];
+    let currentTime = new Date(`1970-01-01T${startTime}`);
+
+    addresses.forEach((address) => {
+      const showingDurationInMs = showingDuration * 60 * 1000; // Convert minutes to milliseconds
+      const travelTimeInMs = travelTime * 60 * 1000; // Convert minutes to milliseconds
+
+      const showingStartTime = new Date(currentTime); // Showing start time
+      const showingEndTime = new Date(currentTime.getTime() + showingDurationInMs); // Calculate showing end time
+
+      // Format the start and end times
+      const startFormatted = formatTime(showingStartTime);
+      const endFormatted = formatTime(showingEndTime);
+
+      newSchedule.push({
+        street: address.street,
+        showingDuration: `${showingDuration} min`,
+        travelTime: `${travelTime} min`,
+        start: startFormatted,
+        end: endFormatted,
+      });
+
+      // Update current time for the next showing
+      currentTime = new Date(showingEndTime.getTime() + travelTimeInMs); // Next showing starts after travel time
+      // Round the next start time to the nearest quarter-hour
+      currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15);
+    });
+
+    setSchedule(newSchedule); // Update state with the new schedule
+  };
+
+  // Helper function to format time as "hh:mm AM/PM"
+  const formatTime = (date: Date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12; // Convert to 12-hour format
+    const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+    return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
   return (
     <div>
       <h1>SHBA Scheduler 🏡</h1>
-      <label>
-        Start Time:
-        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-      </label>
+      <div>
+        <label>Start Time:</label>
+        <input
+          type="time"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+        />
+      </div>
+      <div>
+        <label>Showing Duration (min):</label>
+        <input
+          type="number"
+          value={showingDuration}
+          onChange={(e) => setShowingDuration(Number(e.target.value))}
+        />
+      </div>
+      <div>
+        <label>Travel Time (min):</label>
+        <input
+          type="number"
+          value={travelTime}
+          onChange={(e) => setTravelTime(Number(e.target.value))}
+        />
+      </div>
+
+      {/* Render the list of addresses */}
       {addresses.map((address, index) => (
         <div key={index}>
           <input
             type="text"
-            value={address}
-            onChange={(e) => updateAddress(index, e.target.value)}
-            placeholder="Enter Address (Street, City, Postal Code)"
+            value={address.street}
+            onChange={(e) => updateAddress(index, "street", e.target.value)}
+            placeholder="Street"
           />
-          <label>
-            Showing Duration (min):
-            <input
-              type="number"
-              value={showingDurations[index]}
-              onChange={(e) => updateShowingDuration(index, Number(e.target.value))}
-              min={1}
-            />
-          </label>
-          <label>
-            Travel Time (min):
-            <input
-              type="number"
-              value={travelTimes[index]}
-              onChange={(e) => updateTravelTime(index, Number(e.target.value))}
-              min={1}
-            />
-          </label>
+          <input
+            type="text"
+            value={address.city}
+            onChange={(e) => updateAddress(index, "city", e.target.value)}
+            placeholder="City"
+          />
+          <input
+            type="text"
+            value={address.postalCode}
+            onChange={(e) => updateAddress(index, "postalCode", e.target.value)}
+            placeholder="Postal Code"
+          />
         </div>
       ))}
+
       <button onClick={addAddress}>Add Address ➕</button>
       <button onClick={generateSchedule}>Generate Schedule 🚀</button>
       <button onClick={resetFields}>Reset All 🔄</button>
+
       <h2>Generated Schedule</h2>
       <table>
         <thead>
@@ -147,13 +152,13 @@ const App: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {schedule.map((showing, index) => (
+          {schedule.map((entry, index) => (
             <tr key={index}>
-              <td>{showing.address}</td>
-              <td>{showing.showingDuration} min</td>
-              <td>{showing.travelTime} min</td>
-              <td>{showing.startTime}</td>
-              <td>{showing.endTime}</td>
+              <td>{entry.street}</td>
+              <td>{entry.showingDuration}</td>
+              <td>{entry.travelTime}</td>
+              <td>{entry.start}</td>
+              <td>{entry.end}</td>
             </tr>
           ))}
         </tbody>
