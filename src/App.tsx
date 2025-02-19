@@ -2,8 +2,9 @@ import React, { useState } from "react";
 
 // Define the Schedule interface
 interface Schedule {
-  address: string; // Combine street, city, and postal code into a single address field
+  address: string; // Combined address field
   showingDuration: number;
+  travelTime: number;
   startTime: string;
   endTime: string;
 }
@@ -11,11 +12,17 @@ interface Schedule {
 const App: React.FC = () => {
   const [addresses, setAddresses] = useState<string[]>([""]); // Array to hold addresses as strings
   const [startTime, setStartTime] = useState<string>("13:00"); // Default start time (1:00 PM)
-  const [schedule, setSchedule] = useState<Schedule[]>([]); // Use Schedule type for schedule
+  const [schedule, setSchedule] = useState<Schedule[]>([]); // Schedule state
+
+  // State to hold showing duration and travel time
+  const [showingDurations, setShowingDurations] = useState<number[]>([15]); // Default duration
+  const [travelTimes, setTravelTimes] = useState<number[]>([15]); // Default travel time
 
   // Function to add a new address input
   const addAddress = () => {
     setAddresses([...addresses, ""]); // Add a new empty string for the address
+    setShowingDurations([...showingDurations, 15]); // Default showing duration for new address
+    setTravelTimes([...travelTimes, 15]); // Default travel time for new address
   };
 
   // Function to update a specific address in the array
@@ -23,6 +30,20 @@ const App: React.FC = () => {
     const newAddresses = [...addresses];
     newAddresses[index] = value; // Update the specific address
     setAddresses(newAddresses);
+  };
+
+  // Function to update showing duration
+  const updateShowingDuration = (index: number, value: number) => {
+    const newShowingDurations = [...showingDurations];
+    newShowingDurations[index] = value; // Update the specific duration
+    setShowingDurations(newShowingDurations);
+  };
+
+  // Function to update travel time
+  const updateTravelTime = (index: number, value: number) => {
+    const newTravelTimes = [...travelTimes];
+    newTravelTimes[index] = value; // Update the specific travel time
+    setTravelTimes(newTravelTimes);
   };
 
   // Function to round time to the nearest quarter hour
@@ -40,22 +61,22 @@ const App: React.FC = () => {
     return nextTime;
   };
 
-  // Function to generate schedule based on addresses and start time
+  // Function to generate schedule based on addresses, start time, showing duration, and travel time
   const generateSchedule = () => {
     const newSchedule: Schedule[] = [];
-    const showingDuration = 15; // Fixed showing duration for simplicity
-    const travelTimes = [15, 30]; // Example travel times for demonstration
     const startTimeParts = startTime.split(":");
     const initialDate = new Date();
     initialDate.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]), 0, 0);
     let currentTime = initialDate;
 
     addresses.forEach((address, index) => {
-      const travelTime = travelTimes[index % travelTimes.length]; // Cycle through travel times
+      const showingDuration = showingDurations[index]; // Get showing duration from array
+      const travelTime = travelTimes[index]; // Get travel time from array
       const endTime = calculateNextBookingTime(currentTime, travelTime, showingDuration);
       newSchedule.push({
         address: address,
         showingDuration: showingDuration,
+        travelTime: travelTime,
         startTime: currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
         endTime: endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
       });
@@ -69,6 +90,8 @@ const App: React.FC = () => {
   // Function to reset all fields
   const resetFields = () => {
     setAddresses([""]); // Reset to a single empty address field
+    setShowingDurations([15]);
+    setTravelTimes([15]);
     setStartTime("13:00");
     setSchedule([]);
   };
@@ -88,6 +111,24 @@ const App: React.FC = () => {
             onChange={(e) => updateAddress(index, e.target.value)}
             placeholder="Enter Address (Street, City, Postal Code)"
           />
+          <label>
+            Showing Duration (min):
+            <input
+              type="number"
+              value={showingDurations[index]}
+              onChange={(e) => updateShowingDuration(index, Number(e.target.value))}
+              min={1}
+            />
+          </label>
+          <label>
+            Travel Time (min):
+            <input
+              type="number"
+              value={travelTimes[index]}
+              onChange={(e) => updateTravelTime(index, Number(e.target.value))}
+              min={1}
+            />
+          </label>
         </div>
       ))}
       <button onClick={addAddress}>Add Address ➕</button>
@@ -98,7 +139,8 @@ const App: React.FC = () => {
         <thead>
           <tr>
             <th>Address</th>
-            <th>Showing Time</th>
+            <th>Showing Duration</th>
+            <th>Travel Time</th>
             <th>Start</th>
             <th>End</th>
           </tr>
@@ -108,6 +150,7 @@ const App: React.FC = () => {
             <tr key={index}>
               <td>{showing.address}</td>
               <td>{showing.showingDuration} min</td>
+              <td>{showing.travelTime} min</td>
               <td>{showing.startTime}</td>
               <td>{showing.endTime}</td>
             </tr>
