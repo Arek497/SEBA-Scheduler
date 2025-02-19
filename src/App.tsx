@@ -12,6 +12,8 @@ const App: React.FC = () => {
   const [addresses, setAddresses] = useState<Address[]>([
     { street: "", city: "", postalCode: "" },
   ]);
+  const [startTime, setStartTime] = useState<string>("");
+  const [schedule, setSchedule] = useState<string[]>([]);
 
   // Update function to modify a specific field in a given address
   const updateAddress = (index: number, field: keyof Address, value: string | number) => {
@@ -26,6 +28,21 @@ const App: React.FC = () => {
   // Function to add a new address
   const addAddress = () => {
     setAddresses([...addresses, { street: "", city: "", postalCode: "" }]);
+  };
+
+  // Function to generate schedule based on addresses and start time
+  const generateSchedule = () => {
+    const newSchedule = addresses.map((address, index) => {
+      return `Showing ${index + 1}: ${address.street}, ${address.city} at ${startTime}`;
+    });
+    setSchedule(newSchedule);
+  };
+
+  // Function to reset all fields
+  const resetFields = () => {
+    setAddresses([{ street: "", city: "", postalCode: "" }]);
+    setStartTime("");
+    setSchedule([]);
   };
 
   return (
@@ -53,9 +70,35 @@ const App: React.FC = () => {
           />
         </div>
       ))}
-      
+
       {/* Button to add another address */}
       <button onClick={addAddress}>Add Another Address</button>
+
+      {/* Manual start time input */}
+      <div>
+        <label>Start Time:</label>
+        <input
+          type="time"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+        />
+      </div>
+
+      {/* Button to generate schedule */}
+      <button onClick={generateSchedule}>Generate Schedule</button>
+
+      {/* Button to reset all fields */}
+      <button onClick={resetFields}>Reset All</button>
+
+      {/* Display the generated schedule */}
+      <div>
+        <h2>Schedule:</h2>
+        <ul>
+          {schedule.map((showing, index) => (
+            <li key={index}>{showing}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
