@@ -5,12 +5,14 @@ interface Address {
   street: string;
   city: string;
   postalCode: string | number;
+  travelTime: number; // in minutes
+  showingDuration: number; // in minutes
 }
 
 const App: React.FC = () => {
   // Initialize the addresses state with an array of Address objects
   const [addresses, setAddresses] = useState<Address[]>([
-    { street: "", city: "", postalCode: "" },
+    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 },
   ]);
   const [startTime, setStartTime] = useState<string>("");
   const [schedule, setSchedule] = useState<string[]>([]);
@@ -27,20 +29,21 @@ const App: React.FC = () => {
 
   // Function to add a new address
   const addAddress = () => {
-    setAddresses([...addresses, { street: "", city: "", postalCode: "" }]);
+    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 }]);
   };
 
   // Function to generate schedule based on addresses and start time
   const generateSchedule = () => {
     const newSchedule = addresses.map((address, index) => {
-      return `Showing ${index + 1}: ${address.street}, ${address.city} at ${startTime}`;
+      const endTime = new Date(new Date().setMinutes(new Date().getMinutes() + Number(address.travelTime) + Number(address.showingDuration))).toLocaleTimeString();
+      return `Showing ${index + 1}: ${address.street}, ${address.city} at ${startTime}. Duration: ${address.showingDuration} min, Travel Time: ${address.travelTime} min. End Time: ${endTime}`;
     });
     setSchedule(newSchedule);
   };
 
   // Function to reset all fields
   const resetFields = () => {
-    setAddresses([{ street: "", city: "", postalCode: "" }]);
+    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 }]);
     setStartTime("");
     setSchedule([]);
   };
@@ -67,6 +70,18 @@ const App: React.FC = () => {
             value={address.postalCode}
             onChange={(e) => updateAddress(index, "postalCode", e.target.value)}
             placeholder="Postal Code"
+          />
+          <input
+            type="number"
+            value={address.travelTime}
+            onChange={(e) => updateAddress(index, "travelTime", Number(e.target.value))}
+            placeholder="Travel Time (min)"
+          />
+          <input
+            type="number"
+            value={address.showingDuration}
+            onChange={(e) => updateAddress(index, "showingDuration", Number(e.target.value))}
+            placeholder="Showing Duration (min)"
           />
         </div>
       ))}
