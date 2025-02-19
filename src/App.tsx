@@ -13,22 +13,21 @@ interface Address {
 interface Schedule {
   street: string;
   city: string;
-  startTime: string;
   showingDuration: number;
-  travelTime: number;
-  nextBookingTime: string;
+  startTime: string;
+  endTime: string;
 }
 
 const App: React.FC = () => {
   const [addresses, setAddresses] = useState<Address[]>([
-    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 10 },
+    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 },
   ]);
-  const [startTime, setStartTime] = useState<string>("08:00"); // Default start time
+  const [startTime, setStartTime] = useState<string>("13:00"); // Default start time (1:00 PM)
   const [schedule, setSchedule] = useState<Schedule[]>([]); // Use Schedule type for schedule
 
   // Function to add a new address
   const addAddress = () => {
-    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 10 }]);
+    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 }]);
   };
 
   // Update function to modify a specific field in a given address
@@ -53,7 +52,7 @@ const App: React.FC = () => {
   const calculateNextBookingTime = (currentTime: Date, travelTime: number, showingDuration: number) => {
     let nextTime = new Date(currentTime.getTime() + (travelTime + showingDuration) * 60000);
     nextTime = roundToQuarterHour(nextTime); // Round to nearest quarter hour
-    return nextTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return nextTime;
   };
 
   // Function to generate schedule based on addresses and start time
@@ -65,16 +64,15 @@ const App: React.FC = () => {
     let currentTime = initialDate;
 
     addresses.forEach((address) => {
-      const nextBookingTime = calculateNextBookingTime(currentTime, address.travelTime, address.showingDuration);
+      const endTime = calculateNextBookingTime(currentTime, address.travelTime, address.showingDuration);
       newSchedule.push({
         street: address.street,
         city: address.city,
-        startTime: currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         showingDuration: address.showingDuration,
-        travelTime: address.travelTime,
-        nextBookingTime: nextBookingTime,
+        startTime: currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+        endTime: endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
       });
-      currentTime = new Date(currentTime.getTime() + (address.travelTime + address.showingDuration) * 60000);
+      currentTime = new Date(endTime.getTime() + address.travelTime * 60000);
       currentTime = roundToQuarterHour(currentTime); // Round to the nearest quarter hour after scheduling
     });
 
@@ -83,14 +81,14 @@ const App: React.FC = () => {
 
   // Function to reset all fields
   const resetFields = () => {
-    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 10 }]);
-    setStartTime("08:00");
+    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 }]);
+    setStartTime("13:00");
     setSchedule([]);
   };
 
   return (
     <div>
-      <h1>Schedule Management</h1>
+      <h1>SHBA Scheduler 🏡</h1>
       <label>
         Start Time:
         <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
@@ -129,30 +127,26 @@ const App: React.FC = () => {
           />
         </div>
       ))}
-      <button onClick={addAddress}>Add Address</button>
-      <button onClick={generateSchedule}>Generate Schedule</button>
-      <button onClick={resetFields}>Reset Fields</button>
+      <button onClick={addAddress}>Add Address ➕</button>
+      <button onClick={generateSchedule}>Generate Schedule 🚀</button>
+      <button onClick={resetFields}>Reset All 🔄</button>
       <h2>Generated Schedule</h2>
       <table>
         <thead>
           <tr>
-            <th>Showing</th>
             <th>Address</th>
-            <th>Start Time</th>
-            <th>Duration (min)</th>
-            <th>Travel Time (min)</th>
-            <th>Next Booking Time</th>
+            <th>Showing Time</th>
+            <th>Start</th>
+            <th>End</th>
           </tr>
         </thead>
         <tbody>
           {schedule.map((showing, index) => (
             <tr key={index}>
-              <td>Showing {index + 1}</td>
               <td>{showing.street}, {showing.city}</td>
+              <td>{showing.showingDuration} min</td>
               <td>{showing.startTime}</td>
-              <td>{showing.showingDuration}</td>
-              <td>{showing.travelTime}</td>
-              <td>{showing.nextBookingTime}</td>
+              <td>{showing.endTime}</td>
             </tr>
           ))}
         </tbody>
