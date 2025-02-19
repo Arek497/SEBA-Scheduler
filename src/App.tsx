@@ -1,49 +1,36 @@
 import React, { useState } from "react";
+import "./App.css";
 
-// Define the Address interface with proper types
-interface Address {
+// Define a type for the schedule entry
+interface ScheduleEntry {
   street: string;
-  city: string;
-  postalCode: string;
+  showingDuration: string;
+  travelTime: string;
+  start: string;
+  end: string;
 }
 
 const App: React.FC = () => {
-  // Initialize the addresses state with an array of Address objects
-  const [addresses, setAddresses] = useState<Address[]>([
-    { street: "", city: "", postalCode: "" },
+  const [startTime, setStartTime] = useState("09:00 AM");
+  const [addresses, setAddresses] = useState<{ street: string }[]>([
+    { street: "564 Stonecliffe Rd, Oakville, ON L6L 4N9" },
+    { street: "1322 Stanbury Rd, Oakville, ON L6L 2J4" },
+    { street: "348 Winston Rd, Oakville, ON L6L 4W5" },
+    { street: "231 Wedgewood Dr, Oakville, ON L6J 4R6" },
   ]);
-  const [startTime, setStartTime] = useState<string>("09:00 AM");
   const [showingDuration, setShowingDuration] = useState<number>(10);
   const [travelTime, setTravelTime] = useState<number>(5);
-  const [schedule, setSchedule] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
 
-  // Function to update a specific field in a given address
-  const updateAddress = (index: number, field: keyof Address, value: string) => {
-    const newAddresses = [...addresses];
-    newAddresses[index] = {
-      ...newAddresses[index],
-      [field]: value,
-    };
-    setAddresses(newAddresses);
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours() % 12 || 12;
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = date.getHours() < 12 ? "AM" : "PM";
+    return `${hours}:${minutes} ${ampm}`;
   };
 
-  // Function to add a new address
-  const addAddress = () => {
-    setAddresses([...addresses, { street: "", city: "", postalCode: "" }]);
-  };
-
-  // Function to reset all fields
-  const resetFields = () => {
-    setAddresses([{ street: "", city: "", postalCode: "" }]);
-    setStartTime("09:00 AM");
-    setShowingDuration(10);
-    setTravelTime(5);
-    setSchedule([]);
-  };
-
-  // Function to generate the schedule
   const generateSchedule = () => {
-    const newSchedule = [];
+    const newSchedule: ScheduleEntry[] = [];
     let currentTime = new Date(`1970-01-01T${startTime}`);
 
     addresses.forEach((address) => {
@@ -67,6 +54,7 @@ const App: React.FC = () => {
 
       // Update current time for the next showing
       currentTime = new Date(showingEndTime.getTime() + travelTimeInMs); // Next showing starts after travel time
+
       // Round the next start time to the nearest quarter-hour
       currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15);
     });
@@ -74,18 +62,16 @@ const App: React.FC = () => {
     setSchedule(newSchedule); // Update state with the new schedule
   };
 
-  // Helper function to format time as "hh:mm AM/PM"
-  const formatTime = (date: Date) => {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 || 12; // Convert to 12-hour format
-    const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
-    return `${formattedHours}:${formattedMinutes} ${ampm}`;
+  const resetAll = () => {
+    setStartTime("09:00 AM");
+    setAddresses([{ street: "" }]);
+    setShowingDuration(10);
+    setTravelTime(5);
+    setSchedule([]);
   };
 
   return (
-    <div>
+    <div className="App">
       <h1>SHBA Scheduler 🏡</h1>
       <div>
         <label>Start Time:</label>
@@ -111,35 +97,15 @@ const App: React.FC = () => {
           onChange={(e) => setTravelTime(Number(e.target.value))}
         />
       </div>
-
-      {/* Render the list of addresses */}
-      {addresses.map((address, index) => (
-        <div key={index}>
-          <input
-            type="text"
-            value={address.street}
-            onChange={(e) => updateAddress(index, "street", e.target.value)}
-            placeholder="Street"
-          />
-          <input
-            type="text"
-            value={address.city}
-            onChange={(e) => updateAddress(index, "city", e.target.value)}
-            placeholder="City"
-          />
-          <input
-            type="text"
-            value={address.postalCode}
-            onChange={(e) => updateAddress(index, "postalCode", e.target.value)}
-            placeholder="Postal Code"
-          />
-        </div>
-      ))}
-
-      <button onClick={addAddress}>Add Address ➕</button>
+      <div>
+        <label>Address:</label>
+        <input
+          type="text"
+          onChange={(e) => setAddresses([{ street: e.target.value }])}
+        />
+      </div>
       <button onClick={generateSchedule}>Generate Schedule 🚀</button>
-      <button onClick={resetFields}>Reset All 🔄</button>
-
+      <button onClick={resetAll}>Reset All 🔄</button>
       <h2>Generated Schedule</h2>
       <table>
         <thead>
