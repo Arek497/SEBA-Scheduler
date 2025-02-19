@@ -9,13 +9,23 @@ interface Address {
   showingDuration: number; // Add showingDuration to the address interface
 }
 
+// Define the Schedule interface
+interface Schedule {
+  street: string;
+  city: string;
+  startTime: string;
+  showingDuration: number;
+  travelTime: number;
+  nextBookingTime: string;
+}
+
 const App: React.FC = () => {
   // Initialize the addresses state with an array of Address objects
   const [addresses, setAddresses] = useState<Address[]>([
     { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 },
   ]);
   const [startTime, setStartTime] = useState<string>("08:00"); // Default start time
-  const [schedule, setSchedule] = useState<string[]>([]);
+  const [schedule, setSchedule] = useState<Schedule[]>([]); // Change to Schedule array
 
   // Function to add a new address
   const addAddress = () => {
@@ -40,7 +50,7 @@ const App: React.FC = () => {
 
   // Function to generate schedule based on addresses and start time
   const generateSchedule = () => {
-    const newSchedule: { street: string; city: string; startTime: string; showingDuration: number; travelTime: number; nextBookingTime: string }[] = [];
+    const newSchedule: Schedule[] = []; // Use Schedule type for newSchedule
     const startTimeParts = startTime.split(":");
     const initialDate = new Date();
     initialDate.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]), 0, 0); // Set initial date with the selected time
