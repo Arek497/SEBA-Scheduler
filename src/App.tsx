@@ -5,17 +5,22 @@ interface Address {
   street: string;
   city: string;
   postalCode: string | number;
-  travelTime: number; // in minutes
-  showingDuration: number; // in minutes
+  travelTime: number;  // Add travelTime to the address interface
+  showingDuration: number; // Add showingDuration to the address interface
 }
 
 const App: React.FC = () => {
   // Initialize the addresses state with an array of Address objects
   const [addresses, setAddresses] = useState<Address[]>([
-    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 },
+    { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 },
   ]);
-  const [startTime, setStartTime] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("08:00"); // Default start time
   const [schedule, setSchedule] = useState<string[]>([]);
+
+  // Function to add a new address
+  const addAddress = () => {
+    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 }]);
+  };
 
   // Update function to modify a specific field in a given address
   const updateAddress = (index: number, field: keyof Address, value: string | number) => {
@@ -27,37 +32,24 @@ const App: React.FC = () => {
     setAddresses(newAddresses); // Update the state with the modified addresses
   };
 
-  // Function to add a new address
-  const addAddress = () => {
-    setAddresses([...addresses, { street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 }]);
-  };
-
-  // Function to calculate the next booking time
+  // Function to calculate the next booking time based on travel and showing duration
   const calculateNextBookingTime = (currentTime: Date, travelTime: number, showingDuration: number) => {
-    const totalTime = travelTime + showingDuration;
-    const nextTime = new Date(currentTime.getTime() + totalTime * 60000); // Convert minutes to milliseconds
-
-    // Round to the nearest quarter-hour
-    const minutes = nextTime.getMinutes();
-    const roundedMinutes = Math.round(minutes / 15) * 15;
-    nextTime.setMinutes(roundedMinutes);
-    if (roundedMinutes === 60) {
-      nextTime.setHours(nextTime.getHours() + 1);
-      nextTime.setMinutes(0);
-    }
-    
-    return nextTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const nextBookingTime = new Date(currentTime.getTime() + (travelTime + showingDuration) * 60000);
+    return nextBookingTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   // Function to generate schedule based on addresses and start time
   const generateSchedule = () => {
     const newSchedule: string[] = [];
-    let currentTime = new Date(`1970-01-01T${startTime}:00`); // Using a fixed date
+    const startTimeParts = startTime.split(":");
+    const initialDate = new Date();
+    initialDate.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]), 0, 0); // Set initial date with the selected time
+    let currentTime = initialDate;
 
     addresses.forEach((address, index) => {
       const nextBookingTime = calculateNextBookingTime(currentTime, address.travelTime, address.showingDuration);
       newSchedule.push(`Showing ${index + 1}: ${address.street}, ${address.city} at ${currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Duration: ${address.showingDuration} min, Travel Time: ${address.travelTime} min. Next Booking Time: ${nextBookingTime}`);
-      currentTime = new Date(`1970-01-01T${nextBookingTime}:00`); // Update current time to next booking time
+      currentTime = new Date(currentTime.getTime() + (address.travelTime + address.showingDuration) * 60000); // Update current time to the next booking time
     });
     
     setSchedule(newSchedule);
@@ -65,14 +57,18 @@ const App: React.FC = () => {
 
   // Function to reset all fields
   const resetFields = () => {
-    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 0 }]);
-    setStartTime("");
+    setAddresses([{ street: "", city: "", postalCode: "", travelTime: 0, showingDuration: 15 }]);
+    setStartTime("08:00");
     setSchedule([]);
   };
 
   return (
     <div>
-      {/* Render the list of addresses */}
+      <h1>Schedule Management</h1>
+      <label>
+        Start Time:
+        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+      </label>
       {addresses.map((address, index) => (
         <div key={index}>
           <input
@@ -107,35 +103,15 @@ const App: React.FC = () => {
           />
         </div>
       ))}
-
-      {/* Button to add another address */}
-      <button onClick={addAddress}>Add Another Address</button>
-
-      {/* Manual start time input */}
-      <div>
-        <label>Start Time:</label>
-        <input
-          type="time"
-          value={startTime}
-          onChange={(e) => setStartTime(e.target.value)}
-        />
-      </div>
-
-      {/* Button to generate schedule */}
+      <button onClick={addAddress}>Add Address</button>
       <button onClick={generateSchedule}>Generate Schedule</button>
-
-      {/* Button to reset all fields */}
-      <button onClick={resetFields}>Reset All</button>
-
-      {/* Display the generated schedule */}
-      <div>
-        <h2>Schedule:</h2>
-        <ul>
-          {schedule.map((showing, index) => (
-            <li key={index}>{showing}</li>
-          ))}
-        </ul>
-      </div>
+      <button onClick={resetFields}>Reset Fields</button>
+      <h2>Generated Schedule</h2>
+      <ul>
+        {schedule.map((showing, index) => (
+          <li key={index}>{showing}</li>
+        ))}
+      </ul>
     </div>
   );
 };
